@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  tasks:
+  pre_tasks:
     - name: Create new Network for Cloud TV Managment Project
       amazon.aws.ec2_vpc_net:
         name: Cloud TV Network
@@ -13,116 +13,58 @@
         tags:
           Name:  Cloud TV Internet Gateway
       register: igw
+  roles:
+    - role: aws_create_database
+      vars: 
+        vpc_id: "{{ tv_network.vpc.id }}"
+        allowed_subnets:
+          - '10.10.1.0/24'
 
-    - name: Create Database
-      block:
-        - name: Create DB subnet A
-          amazon.aws.ec2_vpc_subnet:
-            az: us-east-1a
-            vpc_id: "{{ tv_network.vpc.id }}"
-            cidr: 10.10.0.0/28
-            tags:
-              Name: Cloud TV DB Subnet A
-          register: tv_db_subnet_a
+    # - name: Create VPN Server
+    #   block:
+    #     - name: Create VPN security group
+    #       amazon.aws.ec2_security_group:
+    #         name: Cloud TV VPN Security Group
+    #         tags:
+    #           Name: Cloud TV VPN Security Group
+    #         description: Allow inboud trafic to wireguard
+    #         vpc_id: "{{ tv_network.vpc.id }}"
+    #         rules:
+    #           - proto: tcp
+    #             from_port: 32123
+    #             to_port: 32123
+    #             cidr_ip: 0.0.0.0/0
+    #             rule_desc: allow trafic to wireguard
+    #       register: tv_vpn_security_group
 
-        - name: Create DB subnet B
-          amazon.aws.ec2_vpc_subnet:
-            az: us-east-1b
-            vpc_id: "{{ tv_network.vpc.id }}"
-            cidr: 10.10.128.0/28
-            tags:
-              Name: Cloud TV DB Subnet B
-          register: tv_db_subnet_b
-            
-        - name: Create Database subnet group
-          amazon.aws.rds_subnet_group:
-            name: Cloud TV DB
-            description: Database for Cloud TV App
-            state: present
-            subnets:
-              - "{{ tv_db_subnet_a.subnet.id }}"
-              - "{{ tv_db_subnet_b.subnet.id }}"
-          register: tv_db_subnet_group
-    
-        - name: Create Aurora Cluster
-          amazon.aws.rds_cluster:
-            az: 
-              - us-east-1a
-              - us-east-1b
-            cluster_id: tv-database
-            db_subnet_group_name: "{{ tv_db_subnet_group.subnet_group.db_subnet_group_name }}"
-            engine: aurora-postgresql
-            engine_version: "14.6"
-            storage_encrypted: true
-            backup_retention_period: 7
-            # vpc_security_group_ids: default
-            password: "{{ db.password }}"
-            username: "{{ db.username }}"
-          register: tv_database
-        
-        - name: Create Aurora Instance A
-          amazon.aws.rds_instance:
-            az: us-east-1a
-            engine: aurora-postgresql
-            enable_performance_insights: true
-            db_instance_identifier: "{{ tv_database.db_cluster_identifier }}-1"
-            instance_type: db.t3.medium
-            cluster_id: "{{ tv_database.db_cluster_identifier }}"
+    #     - name: Create VPN subnet A
+    #       amazon.aws.ec2_vpc_subnet:
+    #         az: us-east-1a
+    #         vpc_id: "{{ tv_network.vpc.id }}"
+    #         cidr: 10.10.0.16/28
+    #         tags:
+    #           Name: Cloud TV VPN Subnet A
+    #       register: tv_vpn_subnet_a
 
-        - name: Create Aurora Instance B
-          amazon.aws.rds_instance:
-            az: us-east-1b
-            engine: aurora-postgresql
-            enable_performance_insights: true
-            db_instance_identifier: "{{ tv_database.db_cluster_identifier }}-2"
-            instance_type: db.t3.medium
-            cluster_id: "{{ tv_database.db_cluster_identifier }}"
+    #     - name: Create VPN subnet B
+    #       amazon.aws.ec2_vpc_subnet:
+    #         az: us-east-1b
+    #         vpc_id: "{{ tv_network.vpc.id }}"
+    #         cidr: 10.10.128.16/28
+    #         tags:
+    #           Name: Cloud TV VPN Subnet B
+    #       register: tv_vpn_subnet_b
 
-    - name: Create VPN Server
-      block:
-        - name: Create VPN security group
-          amazon.aws.ec2_security_group:
-            name: Cloud TV VPN Security Group
-            tags:
-              Name: Cloud TV VPN Security Group
-            description: Allow inboud trafic to wireguard
-            vpc_id: "{{ tv_network.vpc.id }}"
-            rules:
-              - proto: tcp
-                from_port: 32123
-                to_port: 32123
-                cidr_ip: 0.0.0.0/0
-                rule_desc: allow trafic to wireguard
-          register: tv_vpn_security_group
-
-        - name: Create VPN subnet A
-          amazon.aws.ec2_vpc_subnet:
-            az: us-east-1a
-            vpc_id: "{{ tv_network.vpc.id }}"
-            cidr: 10.10.0.16/28
-            tags:
-              Name: Cloud TV VPN Subnet A
-          register: tv_vpn_subnet_a
-
-        - name: Create VPN subnet B
-          amazon.aws.ec2_vpc_subnet:
-            az: us-east-1b
-            vpc_id: "{{ tv_network.vpc.id }}"
-            cidr: 10.10.128.16/28
-            tags:
-              Name: Cloud TV VPN Subnet B
-          register: tv_vpn_subnet_b
-
-        - name: Create VPN Instance 1
-          amazon.aws.ec2_instance:
-            name: "VPN Wireguard 1"
-            key_name: "test"
-            vpc_subnet_id: "{{ tv_vpn_subnet_a.subnet.id }}"
-            instance_type: t2.micro
-            security_group: "{{ tv_vpn_security_group.group_name }}"
-            network:
-              assign_public_ip: true
-            image_id: ami-00874d747dde814fa # Ubuntu 22.04
+    #     - name: Create VPN Instance 1
+    #       amazon.aws.ec2_instance:
+    #         name: "VPN Wireguard 1"
+    #         key_name: "test"
+    #         vpc_subnet_id: "{{ tv_vpn_subnet_a.subnet.id }}"
+    #         instance_type: t2.micro
+    #         security_group: "{{ tv_vpn_security_group.group_name }}"
+    #         network:
+    #           assign_public_ip: true
+    #         image_id: ami-00874d747dde814fa # Ubuntu 22.04
 
         # - name: Create VPN Load Balancer
         #   amazon.aws.elb_application_lb:

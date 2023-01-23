@@ -1,0 +1,67 @@
+---
+- name: "Create subnets"
+  amazon.aws.ec2_vpc_subnet:
+    az: "{{ region }}{{ item.name }}"
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ item.cidr }}"
+    tags:
+      Name: "Cloud TV DB Subnet {{ item.name }}"
+  loop: "{{ az }}"
+  register: subnets
+
+- name: Create subnet group
+  amazon.aws.rds_subnet_group:
+    name: Cloud TV DB subnet group
+    description: Database for Cloud TV App
+    state: present
+    subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
+  register: subnet_group
+    
+- name: Create security group
+  amazon.aws.ec2_security_group:
+    name: Cloud TV DB Security Group
+    tags:
+      Name: Cloud TV DB Security Group
+    description: Allow inboud trafic to database
+    vpc_id: "{{ tv_network.vpc.id }}"
+    rules:
+      - proto: tcp
+        from_port: "{{ db_port }}"
+        to_port: "{{ db_port }}"
+        cidr_ip: 0.0.0.0/0
+        rule_desc: allow from backend lambdas to databse
+  register: security_group
+
+- name: Create Aurora Cluster
+  amazon.aws.rds_cluster:
+    az: "{{ [region] | product(az | map(attribute='name')) | map('join') }}"
+    cluster_id: tv-database
+    db_subnet_group_name: "{{ subnet_group.subnet_group.db_subnet_group_name }}"
+    engine: aurora-postgresql
+    engine_version: "14.6"
+    storage_encrypted: true
+    backup_retention_period: 7
+    port: "{{ db_port }}"
+    vpc_security_group_ids: "{{ security_group.group_id }}"
+    username: "{{ db_username }}"
+    password: "{{ db_password }}"
+  register: cluster
+
+- name: Create Aurora Instances
+  amazon.aws.rds_instance:
+    az: "{{ region }}{{ item.name }}"
+    engine: aurora-postgresql
+    enable_performance_insights: true
+    db_instance_identifier: "{{ cluster.db_cluster_identifier }}-{{ item.name }}"
+    instance_type: "{{ instance_type }}"
+    cluster_id: "{{ cluster.db_cluster_identifier }}"
+  loop: "{{ az }}"
+
+- name: "Set return variables"
+  set_fact:
+    db:
+      username: "{{ db_username }}"
+      password: "{{ db_password }}"
+      port: "{{ db_port }}"
+      reader_endpoint: "{{ cluster.reader_endpoint }}"
+      endpoint: "{{ cluster.endpoint }}"
