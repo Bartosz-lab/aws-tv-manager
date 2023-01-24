@@ -1,7 +1,7 @@
-aws_create_wireguard_server
+aws_create_bastion
 =========
 
-Create a wireguard server with multiple instances and load balancer
+Create aws bastion Instance
 
 Requirements
 ------------
@@ -21,9 +21,16 @@ Role Variables
 
 * vpc_id: 
     **Required** ID VPC network
-* key_name: 
-    key name for login to instance
+* ansible_key_name: 
+    name of key used with ansible managed instances
+* bastion_key_name: 
+    name of key used with bastion
 * instance_type: 
     Type of EC2 instance
 * image_id: 
     Instance system image id
+
+Return:
+-------
+* security_group_management: 
+    Security group, which shoud be added to all EC2 Instances

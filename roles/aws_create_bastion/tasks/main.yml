@@ -1,0 +1,83 @@
+---
+- name: "Create subnet"
+  amazon.aws.ec2_vpc_subnet:
+    tags:
+      Name: "Cloud TV Bastion Subnet {{ item.name }}"
+      Ansible: true
+      Cloud-TV: true
+    az: "{{ region }}{{ item.name }}"
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ item.cidr }}"
+
+  loop: "{{ az }}"
+  register: subnets
+
+- name: Create security group for bastion
+  amazon.aws.ec2_security_group:
+    tags:
+      Name: Cloud TV Bastion Security Group
+      Ansible: true
+      Cloud-TV: true
+    name: Cloud TV Bastion Security Group
+    description: Allow inboud trafic to Bastion
+    vpc_id: "{{ vpc_id }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+        rule_desc: allow ssh to Bastion
+  register: security_group_bastion
+
+- name: Prepare security rules for internal instances
+  ansible.builtin.set_fact:
+    sg_rules: []
+
+- name: Add security rules for internal instances
+  ansible.builtin.include_tasks:
+    file: build_rules.yml
+  loop: "{{ az }}"
+
+- name: Create security group for internal instances
+  amazon.aws.ec2_security_group:
+    tags:
+      Name: Cloud TV Internal management
+      Ansible: true
+      Cloud-TV: true
+    name: Cloud TV Internal management
+    description: Security group Internal management proxied by bastion 
+    vpc_id: "{{ vpc_id }}"
+    rules: "{{ sg_rules }}"
+  register: security_group_management
+
+- name: Generate Bastion key
+  ansible.builtin.include_tasks:
+    file: keys.yml
+  vars:
+    key_name: "{{ bastion_key_name }}"
+
+- name: Create Instances
+  amazon.aws.ec2_instance:
+    tags:
+      Ansible: true
+      Cloud-TV: true
+      Role: bastion
+    name: "Cloud TV Bastion {{ item.item.name }}"
+    key_name: "{{ key_result.key.name }}"
+    vpc_subnet_id: "{{ item.subnet.id }}"
+    instance_type: "{{ instance_type }}"
+    security_group: "{{ security_group_bastion.group_name }}"
+    image_id: "{{ image_id }}"
+    network:
+      assign_public_ip: true
+    state: running
+  loop: "{{ subnets.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  register: instances
+
+- name: Generate ansible key pair
+  ansible.builtin.include_tasks:
+    file: keys.yml
+  vars:
+    key_name: "{{ ansible_key_name }}"

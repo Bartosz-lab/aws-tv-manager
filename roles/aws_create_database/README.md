@@ -6,51 +6,47 @@ Create aws Postgres Aurora Database with redundation.
 Requirements
 ------------
 
-* VPC Network where databse leave
-* Subnets that are allowed
+* VPC Network ID
+* Allowe Subnets List
 
 
 Role Variables
 --------------
 
-* region:           aws region 
-* az:               List of availability zone with their subnets:
-    - { name: 'a', cidr: '10.10.0.0/28' }
-* vpc_id:           Master Network ID
-* instance_type:    RDS instance type
-* db_port:          Database port
-* db_username:      Database username
-* db_password:      Database password
-* allowed_subnets:  List of allowed subnets
-    - '10.10.1.0/24'
+* region: 
+    aws region
+* az: 
+    list of availability zones with subnets to prepare
+  Example:
+    az:
+      - { name: 'a', cidr: '10.10.127.0/28' }
+
+* vpc_id: 
+    **Required** ID VPC network
+* instance_type: 
+    Type of RDS instance
+* db_port:
+    Database port
+* db_username:
+    Database username
+* db_password:
+    Database password
+* allowed_subnets:  
+    List of allowed subnets in cidr format
 
 Return Variable
 ---------------
   db:
-    username:         Database username
-    password:         Database password
-    port:             Database port
-    reader_endpoint:  Database reader endpoint
-    endpoint:         Database writer endpoint
+    username:
+      Database username
+    password:
+      Database password
+    port:
+      Database port
+    reader_endpoint:
+      Database reader endpoint
+    endpoint:
+      Database writer endpoint
 
-
-Example Playbook
-----------------
-
-  - hosts: localhost
-    roles:
-      - role: aws_create_database
-        vars: 
-          vpc_id: "{{ tv_network.vpc.id }}"
-          allowed_subnets:
-            - '10.10.1.0/24'
-
-License
--------
-
-BSD
-
-Author Information
-------------------
 
 

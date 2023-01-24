@@ -6,6 +6,9 @@
         name: Cloud TV Network
         cidr_block: 10.10.0.0/16
       register: tv_network
+    - name: Set VPC id variable
+      ansible.builtin.set_fact:
+        vpc_id: "{{ tv_network.vpc.id }}"
 
     - name: Create Internet gateway
       amazon.aws.ec2_vpc_igw:
@@ -15,12 +18,6 @@
       register: igw
 
   roles:
-    # - role: aws_create_database
-    #   vars: 
-    #     vpc_id: "{{ tv_network.vpc.id }}"
-    #     allowed_subnets:
-    #       - '10.10.1.0/24'
-    
+    - role: aws_create_bastion
+    - role: aws_create_database
     - role: aws_create_wireguard_server
-      vars: 
-        vpc_id: "{{ tv_network.vpc.id }}"

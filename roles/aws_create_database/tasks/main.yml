@@ -1,16 +1,21 @@
 ---
 - name: "Create subnets"
   amazon.aws.ec2_vpc_subnet:
+    tags:
+      Name: "Cloud TV DB Subnet {{ item.name }}"
+      Ansible: true
+      Cloud-TV: true
     az: "{{ region }}{{ item.name }}"
     vpc_id: "{{ vpc_id }}"
     cidr: "{{ item.cidr }}"
-    tags:
-      Name: "Cloud TV DB Subnet {{ item.name }}"
   loop: "{{ az }}"
   register: subnets
 
 - name: Create subnet group
   amazon.aws.rds_subnet_group:
+    tags:
+      Ansible: true
+      Cloud-TV: true
     name: Cloud TV DB subnet group
     description: Database for Cloud TV App
     state: present
@@ -19,9 +24,11 @@
     
 - name: Create security group
   amazon.aws.ec2_security_group:
-    name: Cloud TV DB Security Group
     tags:
       Name: Cloud TV DB Security Group
+      Ansible: true
+      Cloud-TV: true
+    name: Cloud TV DB Security Group
     description: Allow inboud trafic to database
     vpc_id: "{{ tv_network.vpc.id }}"
     rules:
@@ -34,6 +41,9 @@
 
 - name: Create Aurora Cluster
   amazon.aws.rds_cluster:
+    tags:
+      Ansible: true
+      Cloud-TV: true
     az: "{{ [region] | product(az | map(attribute='name')) | map('join') }}"
     cluster_id: tv-database
     db_subnet_group_name: "{{ subnet_group.subnet_group.db_subnet_group_name }}"
@@ -49,6 +59,9 @@
 
 - name: Create Aurora Instances
   amazon.aws.rds_instance:
+    tags:
+      Ansible: true
+      Cloud-TV: true
     az: "{{ region }}{{ item.name }}"
     engine: aurora-postgresql
     enable_performance_insights: true
@@ -58,7 +71,7 @@
   loop: "{{ az }}"
 
 - name: "Set return variables"
-  set_fact:
+  ansible.builtin.set_fact:
     db:
       username: "{{ db_username }}"
       password: "{{ db_password }}"

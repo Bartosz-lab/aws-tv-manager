@@ -1,22 +1,27 @@
 ---
 - name: "Create subnets"
   amazon.aws.ec2_vpc_subnet:
+    tags:
+      Name: "Cloud TV VPN Subnet {{ item.name }}"
+      Ansible: true
+      Cloud-TV: true
     az: "{{ region }}{{ item.name }}"
     vpc_id: "{{ vpc_id }}"
     cidr: "{{ item.cidr }}"
-    tags:
-      Name: "Cloud TV VPN Subnet {{ item.name }}"
+
   loop: "{{ az }}"
   register: subnets
 
 - name: Create security group
   amazon.aws.ec2_security_group:
-    name: Cloud TV VPN Security Group
     tags:
       Name: Cloud TV VPN Security Group
+      Ansible: true
+      Cloud-TV: true
+    name: Cloud TV VPN Security Group
     description: Allow inboud trafic to wireguard
     vpc_id: "{{ vpc_id }}"
-    rules:
+    rules: 
       - proto: tcp
         from_port: "{{ wg_port }}"
         to_port: "{{ wg_port }}"
@@ -24,16 +29,20 @@
         rule_desc: allow trafic to wireguard
   register: security_group
 
-- name: Create VPN Instances
+- name: Create Instances
   amazon.aws.ec2_instance:
+    tags:
+      Ansible: true
+      Cloud-TV: true
+      Role: wireguard
     name: "VPN Wireguard {{ item.item.name }}"
-    key_name: "test"
+    key_name: "{{ key_name }}"
     vpc_subnet_id: "{{ item.subnet.id }}"
     instance_type: "{{ instance_type }}"
-    security_group: "{{ security_group.group_name }}"
+    security_groups: 
+      - "{{ security_group.group_id }}"
+      - "{{ security_group_management.group_id }}"
     image_id: "{{ image_id }}"
-    network:
-      assign_public_ip: true
     state: running
   loop: "{{ subnets.results }}"
   loop_control:
@@ -42,6 +51,9 @@
       
 - name: Create a target group for Load balancer
   community.aws.elb_target_group:
+    tags:
+      Ansible: true
+      Cloud-TV: true
     name: "cloud-tv-vpn-tg"
     protocol: TCP
     target_type: "instance"
@@ -59,9 +71,11 @@
 
 - name: Create Load balancer
   community.aws.elb_network_lb:
-    name: "cloud-tv-vpn-lb"
     tags:
       Name: "Cloud TV VPN LB"
+      Ansible: true
+      Cloud-TV: true
+    name: "cloud-tv-vpn-lb"    
     cross_zone_load_balancing: true
     subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
     listeners:

@@ -5,6 +5,7 @@ az:
   - { name: 'd', cidr: '10.10.128.16/28' }
 
 vpc_id: 
-wg_port: 22
+wg_port: 32123
+key_name: ansible_key
 instance_type: t2.micro
 image_id: ami-00874d747dde814fa # Ubuntu 22.04
