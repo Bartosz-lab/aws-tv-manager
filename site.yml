@@ -13,66 +13,14 @@
         tags:
           Name:  Cloud TV Internet Gateway
       register: igw
+
   roles:
-    - role: aws_create_database
+    # - role: aws_create_database
+    #   vars: 
+    #     vpc_id: "{{ tv_network.vpc.id }}"
+    #     allowed_subnets:
+    #       - '10.10.1.0/24'
+    
+    - role: aws_create_wireguard_server
       vars: 
         vpc_id: "{{ tv_network.vpc.id }}"
-        allowed_subnets:
-          - '10.10.1.0/24'
-
-    # - name: Create VPN Server
-    #   block:
-    #     - name: Create VPN security group
-    #       amazon.aws.ec2_security_group:
-    #         name: Cloud TV VPN Security Group
-    #         tags:
-    #           Name: Cloud TV VPN Security Group
-    #         description: Allow inboud trafic to wireguard
-    #         vpc_id: "{{ tv_network.vpc.id }}"
-    #         rules:
-    #           - proto: tcp
-    #             from_port: 32123
-    #             to_port: 32123
-    #             cidr_ip: 0.0.0.0/0
-    #             rule_desc: allow trafic to wireguard
-    #       register: tv_vpn_security_group
-
-    #     - name: Create VPN subnet A
-    #       amazon.aws.ec2_vpc_subnet:
-    #         az: us-east-1a
-    #         vpc_id: "{{ tv_network.vpc.id }}"
-    #         cidr: 10.10.0.16/28
-    #         tags:
-    #           Name: Cloud TV VPN Subnet A
-    #       register: tv_vpn_subnet_a
-
-    #     - name: Create VPN subnet B
-    #       amazon.aws.ec2_vpc_subnet:
-    #         az: us-east-1b
-    #         vpc_id: "{{ tv_network.vpc.id }}"
-    #         cidr: 10.10.128.16/28
-    #         tags:
-    #           Name: Cloud TV VPN Subnet B
-    #       register: tv_vpn_subnet_b
-
-    #     - name: Create VPN Instance 1
-    #       amazon.aws.ec2_instance:
-    #         name: "VPN Wireguard 1"
-    #         key_name: "test"
-    #         vpc_subnet_id: "{{ tv_vpn_subnet_a.subnet.id }}"
-    #         instance_type: t2.micro
-    #         security_group: "{{ tv_vpn_security_group.group_name }}"
-    #         network:
-    #           assign_public_ip: true
-    #         image_id: ami-00874d747dde814fa # Ubuntu 22.04
-
-        # - name: Create VPN Load Balancer
-        #   amazon.aws.elb_application_lb:
-        #     name: Cloud TV VPN Load Balancer
-        #     subnets:
-        #       - "{{ tv_vpn_subnet_a.subnet.id }}"
-        #       - "{{ tv_vpn_subnet_b.subnet.id }}"
-        #     ip_address_type: ipv4
-        #     listeners:
-        #       - Protocol: TCP
-        #         Port: 32123
