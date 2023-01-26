@@ -1,0 +1,24 @@
+---
+- name: Configure Wireguard
+  hosts: group_wireguard
+  become: true
+  tasks:
+    - name: Add confg
+      ansible.builtin.copy:
+        src: wg_config.conf
+        dest: /etc/wireguard/wg0.conf    
+
+    - name: Enable and start Wireguard
+      ansible.builtin.systemd:
+        name: wg-quick@wg0
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    - name: Enable Routing
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        sysctl_set: true
+        state: present
+        reload: true

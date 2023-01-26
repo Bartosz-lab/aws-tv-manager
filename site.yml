@@ -14,7 +14,7 @@
         - wg
         - wg_init
 
-# - import_playbook: playbooks/config_wireguard.yml
-#   tags:
-#     - wg
-#     - wg_config
+- import_playbook: playbooks/config_wireguard.yml
+  tags:
+    - wg
+    - wg_config
