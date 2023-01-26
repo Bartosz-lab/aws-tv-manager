@@ -25,5 +25,7 @@ Role Variables
     key name for login to instance
 * instance_type: 
     Type of EC2 instance
+* ami_name: 
+    Name of AMI instance
 * image_id: 
     Instance system image id

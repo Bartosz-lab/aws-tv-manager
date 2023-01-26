@@ -1,23 +1,20 @@
 ---
 - hosts: localhost
-  pre_tasks:
-    - name: Create new Network for Cloud TV Managment Project
-      amazon.aws.ec2_vpc_net:
-        name: Cloud TV Network
-        cidr_block: 10.10.0.0/16
-      register: tv_network
-    - name: Set VPC id variable
-      ansible.builtin.set_fact:
-        vpc_id: "{{ tv_network.vpc.id }}"
-
-    - name: Create Internet gateway
-      amazon.aws.ec2_vpc_igw:
-        vpc_id: "{{ tv_network.vpc.id }}"
-        tags:
-          Name:  Cloud TV Internet Gateway
-      register: igw
-
   roles:
+    - role: aws_startup
+      tags: always
+      
     - role: aws_create_bastion
-    - role: aws_create_database
+      tags: always
+
+    # - role: aws_create_database
+
     - role: aws_create_wireguard_server
+      tags: 
+        - wg
+        - wg_init
+
+# - import_playbook: playbooks/config_wireguard.yml
+#   tags:
+#     - wg
+#     - wg_config

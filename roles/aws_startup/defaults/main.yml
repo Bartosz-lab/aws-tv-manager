@@ -1,5 +1,6 @@
 ---
 region: us-east-1
 network: 10.20.0.0/16
-nat_subnet: 10.20.127.0/28
+nat_gw_subnet: 10.20.127.0/28
+nat_subnet: 10.20.127.16/28
 nat_az: a

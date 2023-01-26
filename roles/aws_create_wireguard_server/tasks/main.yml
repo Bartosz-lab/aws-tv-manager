@@ -1,8 +1,8 @@
 ---
-- name: "Create subnets"
+- name: Create Subnets
   amazon.aws.ec2_vpc_subnet:
     tags:
-      Name: "Cloud TV VPN Subnet {{ item.name }}"
+      Name: "TV Wireguard Subnet {{ item.name }}"
       Ansible: true
       Cloud-TV: true
     az: "{{ region }}{{ item.name }}"
@@ -12,22 +12,52 @@
   loop: "{{ az }}"
   register: subnets
 
+- name: Add Subnets to Route Table
+  amazon.aws.ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    lookup: id
+    route_table_id: "{{ rt_igw_id }}"
+    purge_subnets: false
+    purge_routes: false
+    subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
+
 - name: Create security group
   amazon.aws.ec2_security_group:
     tags:
-      Name: Cloud TV VPN Security Group
+      Name: TV VPN Security Group
       Ansible: true
       Cloud-TV: true
-    name: Cloud TV VPN Security Group
+    name: TV VPN Security Group
     description: Allow inboud trafic to wireguard
     vpc_id: "{{ vpc_id }}"
     rules: 
-      - proto: tcp
+      - proto: udp
         from_port: "{{ wg_port }}"
         to_port: "{{ wg_port }}"
         cidr_ip: 0.0.0.0/0
         rule_desc: allow trafic to wireguard
   register: security_group
+
+- name: Get AMIs
+  amazon.aws.ec2_ami_info:
+    filters:
+      tag:Name: "{{ ami_name }}"
+      tag:Ansible: 'True'
+      tag:Cloud-TV: 'True'
+  register: ami_info
+
+- name: Create Wireguard AMI
+  ansible.builtin.include_tasks:
+    file: create_ami.yml
+  when: ami_info.images[0] is not defined
+
+- name: Set AMI id
+  ansible.builtin.set_fact:
+    ami_id: "{{ ami_info.images[0].image_id }}"
+  when: ami_info.images[0] is defined
+    
+- debug:
+    var: ami_id
 
 - name: Create Instances
   amazon.aws.ec2_instance:
@@ -35,14 +65,14 @@
       Ansible: true
       Cloud-TV: true
       Role: wireguard
-    name: "VPN Wireguard {{ item.item.name }}"
+    name: "TV Wireguard {{ item.item.name }}"
     key_name: "{{ key_name }}"
     vpc_subnet_id: "{{ item.subnet.id }}"
     instance_type: "{{ instance_type }}"
     security_groups: 
       - "{{ security_group.group_id }}"
-      - "{{ security_group_management.group_id }}"
-    image_id: "{{ image_id }}"
+      - "{{ sg_management_id }}"
+    image_id: "{{ ami_id }}"
     state: running
   loop: "{{ subnets.results }}"
   loop_control:
@@ -54,8 +84,8 @@
     tags:
       Ansible: true
       Cloud-TV: true
-    name: "cloud-tv-vpn-tg"
-    protocol: TCP
+    name: "tv-wireguard-tg"
+    protocol: UDP
     target_type: "instance"
     port: "{{ wg_port }}"
     vpc_id: "{{ vpc_id }}"
@@ -72,14 +102,14 @@
 - name: Create Load balancer
   community.aws.elb_network_lb:
     tags:
-      Name: "Cloud TV VPN LB"
+      Name: "TV VPN LB"
       Ansible: true
       Cloud-TV: true
-    name: "cloud-tv-vpn-lb"    
+    name: "tv-vpn-lb"    
     cross_zone_load_balancing: true
     subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
     listeners:
-      - Protocol: TCP 
+      - Protocol: UDP 
         Port: "{{ wg_port }}"
         DefaultActions:
           - Type: forward

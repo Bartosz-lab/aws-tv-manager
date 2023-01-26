@@ -1,0 +1,48 @@
+---
+- name: Create AMI VM
+  amazon.aws.ec2_instance:
+    tags:
+      Ansible: true
+      Cloud-TV: true
+      Role: wireguard_ami
+    name: TV Wireguard AMI
+    key_name: "{{ key_name }}"
+    vpc_subnet_id: "{{ subnet_nat_id }}"
+    instance_type: "{{ instance_type }}"
+    security_groups: 
+      - "{{ sg_management_id }}"
+    image_id: "{{ image_id }}"
+    state: running
+  register: instance_ami
+
+- name: Install Wireguard
+  delegate_to: "{{ hostvars[groups.group_wireguard_ami[0]].private_dns_name }}"
+  delegate_facts: true
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    name: wireguard
+    state: present
+
+- name: Save AMI
+  amazon.aws.ec2_ami:
+    tags:
+      Name: "{{ ami_name }}"
+      Ansible: true
+      Cloud-TV: true
+    instance_id: "{{ instance_ami.instances[0].instance_id }}"
+    wait: true
+    name: "{{ ami_name }}"
+  register: result_ami
+
+- name: Set AMI id 
+  ansible.builtin.set_fact:
+    ami_id: "{{ result_ami.image_id }}"
+
+- name: Terminame AMI VM
+  amazon.aws.ec2_instance:
+    instance_ids:
+      - "{{ instance_ami.instances[0].instance_id }}"
+    state: terminated
+    wait: false
+  register: instance_ami

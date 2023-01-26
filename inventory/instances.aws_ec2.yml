@@ -1,0 +1,22 @@
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+
+include_filters:
+  - tag:Ansible: 'True'
+  - tag:Cloud-TV: 'True'
+
+keyed_groups:
+  - key: tags.Role
+    prefix: group
+
+hostnames:
+  - tag:Name
+  - dns-name
+  - ip-address
+  - private-dns-name
+  - private-ip-address
+
+compose:
+  ansible_host: private_ip_address

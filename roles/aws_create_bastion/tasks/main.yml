@@ -93,4 +93,4 @@
 
 - name: Set Variables
   ansible.builtin.set_fact:
-    sg_management_id: sg_management.group_id
+    sg_management_id: "{{ sg_management.group_id }}"
