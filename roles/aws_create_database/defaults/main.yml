@@ -1,8 +1,8 @@
 ---
 region: 'us-east-1'
 az:
-  - { name: 'a', cidr: '10.10.0.0/28' }
-  - { name: 'd', cidr: '10.10.128.0/28' }
+  - { name: 'a', cidr: '10.20.0.0/28' }
+  - { name: 'd', cidr: '10.20.128.0/28' }
 
 vpc_id: 
 instance_type: db.t3.medium
@@ -10,6 +10,6 @@ db_port: 5432
 db_username: tvadmin
 db_password: Password123
 
-allowed_subnets:
-  - '10.10.1.0/24'
-  - '10.10.129.0/24'
+# allowed_subnets:
+#   - '10.0.1.0/24'
+#   - '10.10.129.0/24'

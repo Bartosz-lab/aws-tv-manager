@@ -7,7 +7,10 @@
     - role: aws_create_bastion
       tags: always
 
-    # - role: aws_create_database
+    - role: aws_create_database
+      tags:
+        - db
+        - db_init
 
     - role: aws_create_wireguard_server
       tags: 

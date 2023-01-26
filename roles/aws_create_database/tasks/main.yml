@@ -2,7 +2,7 @@
 - name: "Create subnets"
   amazon.aws.ec2_vpc_subnet:
     tags:
-      Name: "Cloud TV DB Subnet {{ item.name }}"
+      Name: "TV DB Subnet {{ item.name }}"
       Ansible: true
       Cloud-TV: true
     az: "{{ region }}{{ item.name }}"
@@ -16,7 +16,7 @@
     tags:
       Ansible: true
       Cloud-TV: true
-    name: Cloud TV DB subnet group
+    name: TV DB subnet group
     description: Database for Cloud TV App
     state: present
     subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
@@ -25,12 +25,12 @@
 - name: Create security group
   amazon.aws.ec2_security_group:
     tags:
-      Name: Cloud TV DB Security Group
+      Name: TV DB Security Group
       Ansible: true
       Cloud-TV: true
-    name: Cloud TV DB Security Group
+    name: TV DB Security Group
     description: Allow inboud trafic to database
-    vpc_id: "{{ tv_network.vpc.id }}"
+    vpc_id: "{{ vpc_id }}"
     rules:
       - proto: tcp
         from_port: "{{ db_port }}"
