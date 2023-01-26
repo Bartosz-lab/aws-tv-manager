@@ -1,8 +1,8 @@
 ---
-- name: "Create subnet"
+- name: Create Subnets
   amazon.aws.ec2_vpc_subnet:
     tags:
-      Name: "Cloud TV Bastion Subnet {{ item.name }}"
+      Name: "TV Bastion Subnet {{ item.name }}"
       Ansible: true
       Cloud-TV: true
     az: "{{ region }}{{ item.name }}"
@@ -12,13 +12,22 @@
   loop: "{{ az }}"
   register: subnets
 
+- name: Add Subnets to Route Table
+  amazon.aws.ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    lookup: id
+    route_table_id: "{{ rt_igw_id }}"
+    purge_subnets: false
+    purge_routes: false
+    subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
+
 - name: Create security group for bastion
   amazon.aws.ec2_security_group:
     tags:
-      Name: Cloud TV Bastion Security Group
+      Name: TV Bastion Security Group
       Ansible: true
       Cloud-TV: true
-    name: Cloud TV Bastion Security Group
+    name: TV Bastion Security Group
     description: Allow inboud trafic to Bastion
     vpc_id: "{{ vpc_id }}"
     rules:
@@ -41,14 +50,14 @@
 - name: Create security group for internal instances
   amazon.aws.ec2_security_group:
     tags:
-      Name: Cloud TV Internal management
+      Name: TV Internal management
       Ansible: true
       Cloud-TV: true
-    name: Cloud TV Internal management
+    name: TV Internal management
     description: Security group Internal management proxied by bastion 
     vpc_id: "{{ vpc_id }}"
     rules: "{{ sg_rules }}"
-  register: security_group_management
+  register: sg_management
 
 - name: Generate Bastion key
   ansible.builtin.include_tasks:
@@ -62,7 +71,7 @@
       Ansible: true
       Cloud-TV: true
       Role: bastion
-    name: "Cloud TV Bastion {{ item.item.name }}"
+    name: "TV Bastion {{ item.item.name }}"
     key_name: "{{ key_result.key.name }}"
     vpc_subnet_id: "{{ item.subnet.id }}"
     instance_type: "{{ instance_type }}"
@@ -81,3 +90,7 @@
     file: keys.yml
   vars:
     key_name: "{{ ansible_key_name }}"
+
+- name: Set Variables
+  ansible.builtin.set_fact:
+    sg_management_id: sg_management.group_id

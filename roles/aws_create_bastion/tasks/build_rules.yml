@@ -7,6 +7,7 @@
       to_port: 22
       cidr_ip: "{{ item.cidr }}"
       rule_desc: allow trafic from bastion
+
 - name: Append bastion rule
   ansible.builtin.set_fact:
     sg_rules: "{{ sg_rules + [rule] }}"

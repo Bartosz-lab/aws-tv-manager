@@ -1,7 +1,7 @@
 ---
 region: 'us-east-1'
 az:
-  - { name: 'a', cidr: '10.10.127.0/28' }
+  - { name: 'a', cidr: '10.20.127.16/28' }
 
 vpc_id: 
 ansible_key_name: ansible_key

@@ -32,5 +32,5 @@ Role Variables
 
 Return:
 -------
-* security_group_management: 
-    Security group, which shoud be added to all EC2 Instances
+* sg_management_id: 
+    Security group id, which shoud be added to all EC2 Instances
