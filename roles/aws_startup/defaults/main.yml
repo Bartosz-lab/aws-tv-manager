@@ -3,8 +3,3 @@ region: us-east-1
 network: 10.20.0.0/16
 nat_subnet: 10.20.127.0/28
 nat_az: a
-
-az:
-  - { name: 'a', cidr: '10.10.0.16/28' }
-  - { name: 'd', cidr: '10.10.128.16/28' }
-
