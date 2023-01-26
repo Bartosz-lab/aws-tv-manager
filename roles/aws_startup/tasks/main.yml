@@ -1,0 +1,98 @@
+---
+- name: Create new Network for Cloud TV Managment Project
+  amazon.aws.ec2_vpc_net:
+    tags:
+      Ansible: true
+      Cloud-TV: true
+    name: Cloud TV Network 2
+    cidr_block: "{{ network }}"
+  register: aws_vpc
+
+- name: Create Internet gateway
+  amazon.aws.ec2_vpc_igw:
+    tags:
+      Name:  Cloud TV Internet Gateway
+      Ansible: true
+      Cloud-TV: true
+    vpc_id: "{{ aws_vpc.vpc.id }}"
+  register: aws_igw
+
+- name: Create Nat Subnet
+  amazon.aws.ec2_vpc_subnet:
+    tags:
+      Name: TV NAT
+      Ansible: true
+      Cloud-TV: true
+    az: "{{ region }}{{ nat_az }}"
+    vpc_id: "{{ aws_vpc.vpc.id }}"
+    cidr: "{{ nat_subnet }}"
+  register: aws_subnet_nat
+
+- name: Find table ID
+  amazon.aws.ec2_vpc_route_table_info:
+    filters:
+      tag:Name: TV IGW Route Table
+      tag:Ansible: 'True'
+      tag:Cloud-TV: 'True'
+  register: aws_find_rt_igw
+
+- name: Create Igw Route Table
+  amazon.aws.ec2_vpc_route_table:
+    tags:
+      Name: TV IGW Route Table
+      Ansible: true
+      Cloud-TV: true
+    lookup: id
+    route_table_id: "{{ aws_find_rt_igw.route_tables[0].id 
+          if aws_find_rt_igw.route_tables | length > 0 else 'none' }}"
+    purge_subnets: false
+    vpc_id: "{{ aws_vpc.vpc.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ aws_igw.gateway_id }}"
+    subnets:
+      - "{{ aws_subnet_nat.subnet.id }}"
+  register: aws_rt_igw
+
+- name: Create NAT Gateway
+  amazon.aws.ec2_vpc_nat_gateway:
+    tags:
+        Name: TV NAT Gateway
+        Ansible: true
+        Cloud-TV: true
+    if_exist_do_not_create: true
+    subnet_id: "{{ aws_subnet_nat.subnet.id }}"
+    wait: true
+  register: aws_nat_gw
+
+- name: Find table ID
+  amazon.aws.ec2_vpc_route_table_info:
+    filters:
+      tag:Name: TV NAT Route Table
+      tag:Ansible: 'True'
+      tag:Cloud-TV: 'True'
+  register: aws_find_rt_nat
+
+- name: Create NAT Route Table
+  amazon.aws.ec2_vpc_route_table:
+    tags:
+      Name: TV NAT Route Table
+      Ansible: true
+      Cloud-TV: true
+    vpc_id: "{{ aws_vpc.vpc.id }}"
+    lookup: id
+    route_table_id: "{{ aws_find_rt_nat.route_tables[0].id if aws_find_rt_nat.route_tables | length > 0 else 'none' }}"
+    purge_subnets: false
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ aws_nat_gw.nat_gateway_id }}"
+  register: aws_rt_nat
+
+- name: Set Variables
+  ansible.builtin.set_fact:
+    vpc_id: "{{ aws_vpc.vpc.id }}"
+    igw_id: "{{ aws_igw.gateway_id }}"
+    subnet_nat_id: "{{ aws_subnet_nat.subnet.id }}"
+    nat_gw_id: "{{ aws_nat_gw.nat_gateway_id }}"
+    rt_igw_id: "{{ aws_rt_igw.route_table.id }}"
+    rt_nat_id: "{{ aws_rt_nat.route_table.id }}"
