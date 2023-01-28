@@ -1,0 +1,72 @@
+---
+- name: Configure Database
+  hosts: group_bastion
+  run_once: true
+  become: true
+
+  tasks:
+    - name: Install pip3 on bastion
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - pip
+        state: present
+        
+    - name: Install psycopg2 on bastion
+      ansible.builtin.pip:
+        name:
+          - psycopg2-binary
+        state: present
+
+    - name: Create Database
+      community.postgresql.postgresql_db:
+        name: "{{ db.name }}"
+        port: "{{ db.port }}"
+        login_host: "{{ db.writer_endpoint }}"
+        login_user: "{{ db.username }}"
+        login_password: "{{ db.password }}"
+
+    - name: Create Locations Table
+      community.postgresql.postgresql_table:
+        db: "{{ db.name }}"
+        port: "{{ db.port }}"
+        login_host: "{{ db.writer_endpoint }}"
+        login_user: "{{ db.username }}"
+        login_password: "{{ db.password }}"
+        table: LOCATIONS
+        columns:
+          - id SERIAL PRIMARY KEY
+          - address VARCHAR(300)
+
+    - name: Create Employees Table
+      community.postgresql.postgresql_table:
+        db: "{{ db.name }}"
+        port: "{{ db.port }}"
+        login_host: "{{ db.writer_endpoint }}"
+        login_user: "{{ db.username }}"
+        login_password: "{{ db.password }}"
+        table: EMPLOYEES
+        columns:
+          - id SERIAL PRIMARY KEY
+          - name VARCHAR(80)
+          - surname VARCHAR(80)
+          - role VARCHAR(30)
+
+    - name: Create TVs Table
+      community.postgresql.postgresql_table:
+        db: "{{ db.name }}"
+        port: "{{ db.port }}"
+        login_host: "{{ db.writer_endpoint }}"
+        login_user: "{{ db.username }}"
+        login_password: "{{ db.password }}"
+        table: TVS
+        columns:
+          - id SERIAL PRIMARY KEY
+          - ip_addr INET
+          # - status 
+          - supervisor_id INT NOT NULL
+          - location_id INT NOT NULL
+          - available BOOLEAN DEFAULT false
+          - last_seen DATE
+          - FOREIGN KEY (supervisor_id) REFERENCES "EMPLOYEES"(id) ON DELETE CASCADE
+          - FOREIGN KEY (location_id) REFERENCES "LOCATIONS"(id) ON DELETE CASCADE

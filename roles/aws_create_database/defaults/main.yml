@@ -9,6 +9,7 @@ instance_type: db.t3.medium
 db_port: 5432
 db_username: tvadmin
 db_password: Password123
+db_name: TV Database
 
 # allowed_subnets:
 #   - '10.0.1.0/24'

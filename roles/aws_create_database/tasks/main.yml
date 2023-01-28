@@ -70,11 +70,12 @@
     cluster_id: "{{ cluster.db_cluster_identifier }}"
   loop: "{{ az }}"
 
-- name: "Set return variables"
+- name: Set return variables
   ansible.builtin.set_fact:
     db:
       username: "{{ db_username }}"
       password: "{{ db_password }}"
       port: "{{ db_port }}"
       reader_endpoint: "{{ cluster.reader_endpoint }}"
-      endpoint: "{{ cluster.endpoint }}"
+      writer_endpoint: "{{ cluster.endpoint }}"
+      name: "{{ db_name }}"

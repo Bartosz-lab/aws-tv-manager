@@ -21,3 +21,9 @@
   tags:
     - wg
     - wg_config
+
+- import_playbook: playbooks/config_database.yml
+  vars:
+    db: "{{ hostvars['localhost'].db }}"
+  tags:
+    - db
