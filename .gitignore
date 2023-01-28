@@ -1,1 +1,2 @@
 *.pem
+playbooks/files/wg_config.conf
