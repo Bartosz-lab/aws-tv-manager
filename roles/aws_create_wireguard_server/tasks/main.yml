@@ -36,6 +36,11 @@
         to_port: "{{ wg_port }}"
         cidr_ip: 0.0.0.0/0
         rule_desc: allow trafic to wireguard
+      - proto: tcp
+        from_port: "{{ wg_port }}"
+        to_port: "{{ wg_port }}"
+        cidr_ip: 0.0.0.0/0
+        rule_desc: allow trafic from health check
   register: security_group
 
 - name: Get AMIs
@@ -55,9 +60,6 @@
   ansible.builtin.set_fact:
     ami_id: "{{ ami_info.images[0].image_id }}"
   when: ami_info.images[0] is defined
-    
-- debug:
-    var: ami_id
 
 - name: Create Instances
   amazon.aws.ec2_instance:
@@ -84,12 +86,17 @@
     tags:
       Ansible: true
       Cloud-TV: true
-    name: "tv-wireguard-tg"
+    name: tv-wireguard-tg
     protocol: UDP
-    target_type: "instance"
+    target_type: instance
     port: "{{ wg_port }}"
     vpc_id: "{{ vpc_id }}"
     state: present
+    # Buggy task, can't update existing group, for now edit it manually
+    # health_check_protocol: http
+    # health_check_port: "{{ wg_port }}"
+    # health_check_path: /
+    # successful_response_codes: "200"
   register: target_group
 
 - name: Add targets to target group
@@ -102,10 +109,10 @@
 - name: Create Load balancer
   community.aws.elb_network_lb:
     tags:
-      Name: "TV VPN LB"
+      Name: TV VPN LB
       Ansible: true
       Cloud-TV: true
-    name: "tv-vpn-lb"    
+    name: tv-vpn-lb
     cross_zone_load_balancing: true
     subnets: "{{ subnets.results | map(attribute='subnet.id') }}"
     listeners:

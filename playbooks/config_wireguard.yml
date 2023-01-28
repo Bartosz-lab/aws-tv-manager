@@ -3,6 +3,8 @@
   hosts: group_wireguard
   become: true
   tasks:
+    - ansible.builtin.meta: refresh_inventory
+    
     - name: Add confg
       ansible.builtin.copy:
         src: wg_config.conf
@@ -11,7 +13,7 @@
     - name: Enable and start Wireguard
       ansible.builtin.systemd:
         name: wg-quick@wg0
-        state: started
+        state: restarted
         enabled: true
         daemon_reload: true
 
