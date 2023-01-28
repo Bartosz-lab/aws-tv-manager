@@ -15,14 +15,30 @@
     state: running
   register: instance_ami
 
-- name: Install Wireguard
+- ansible.builtin.meta: refresh_inventory
+
+- name: Configure AMI
   delegate_to: "{{ hostvars[groups.group_wireguard_ami[0]].private_dns_name }}"
   delegate_facts: true
   become: true
-  ansible.builtin.apt:
-    update_cache: true
-    name: wireguard
-    state: present
+  block:
+    - name: Install Wireguard
+      ansible.builtin.apt:
+        update_cache: true
+        name: wireguard
+        state: present
+
+    - name: Create health check systemd service file
+      ansible.builtin.template:
+        src: health_check.service.j2
+        dest: /lib/systemd/system/health_check.service
+
+    - name: Enable and start health check
+      ansible.builtin.systemd:
+        name: health_check.service
+        state: started
+        enabled: true
+        daemon_reload: true
 
 - name: Save AMI
   amazon.aws.ec2_ami:

@@ -1,0 +1,12 @@
+[Unit]
+Description=Health check
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/usr/bin/python3 -m http.server {{ wg_port }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
