@@ -7,6 +7,10 @@
     - role: aws_create_bastion
       tags: always
 
+    - role: aws_create_lambdas
+      tags:
+        - lambda
+
     - role: aws_create_database
       tags:
         - db

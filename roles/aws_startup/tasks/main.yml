@@ -46,6 +46,7 @@
     route_table_id: "{{ aws_find_rt_igw.route_tables[0].id 
           if aws_find_rt_igw.route_tables | length > 0 else 'none' }}"
     purge_subnets: false
+    purge_routes: false
     vpc_id: "{{ aws_vpc.vpc.id }}"
     routes:
       - dest: 0.0.0.0/0
@@ -102,6 +103,27 @@
       - "{{ aws_subnet_nat.subnet.id }}"
   register: aws_rt_nat
 
+- name: Find table ID
+  amazon.aws.ec2_vpc_route_table_info:
+    filters:
+      tag:Name: TV Default Route Table
+      tag:Ansible: 'True'
+      tag:Cloud-TV: 'True'
+  register: aws_find_rt_def
+
+- name: Create Default Route Table
+  amazon.aws.ec2_vpc_route_table:
+    tags:
+      Name: TV Default Route Table
+      Ansible: true
+      Cloud-TV: true
+    vpc_id: "{{ aws_vpc.vpc.id }}"
+    lookup: id
+    route_table_id: "{{ aws_find_rt_def.route_tables[0].id if aws_find_rt_def.route_tables | length > 0 else 'none' }}"
+    purge_subnets: false
+    purge_routes: false
+  register: aws_rt_def
+
 - name: Set Variables
   ansible.builtin.set_fact:
     vpc_id: "{{ aws_vpc.vpc.id }}"
@@ -110,3 +132,4 @@
     nat_gw_id: "{{ aws_nat_gw.nat_gateway_id }}"
     rt_igw_id: "{{ aws_rt_igw.route_table.id }}"
     rt_nat_id: "{{ aws_rt_nat.route_table.id }}"
+    rt_def_id: "{{ aws_rt_def.route_table.id }}"

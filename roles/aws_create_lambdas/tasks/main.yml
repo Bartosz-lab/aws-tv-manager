@@ -1,0 +1,22 @@
+---
+- name: Create Subnets
+  amazon.aws.ec2_vpc_subnet:
+    tags:
+      Name: "TV Lambdas Subnet {{ item.name }}"
+      Ansible: true
+      Cloud-TV: true
+    az: "{{ region }}{{ item.name }}"
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ item.cidr }}"
+
+  loop: "{{ az }}"
+  register: subnets
+
+- name: Add Subnets to Route Table
+  amazon.aws.ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    lookup: id
+    route_table_id: "{{ rt_def_id }}"
+    purge_subnets: false
+    purge_routes: false
+    subnets: "{{ subnets.results | map(attribute='subnet.id') }}"

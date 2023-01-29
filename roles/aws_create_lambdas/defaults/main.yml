@@ -1,0 +1,5 @@
+---
+region: 'us-east-1'
+az:
+  - { name: 'a', cidr: '10.20.1.0/24' }
+  - { name: 'd', cidr: '10.20.129.0/24' }

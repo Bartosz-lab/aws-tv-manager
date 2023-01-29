@@ -122,3 +122,17 @@
           - Type: forward
             TargetGroupName: "{{ target_group.target_group_name }}"
 
+# For one VPN instance, more instances in feauture
+- name: Add Routing to VPN subnet
+  amazon.aws.ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    lookup: id
+    route_table_id: "{{ item }}"
+    purge_subnets: false
+    purge_routes: false
+    routes:
+      - dest: "{{ vpn_subnet }}"
+        instance_id: "{{ (instances.results | map(attribute='instances') | flatten | map(attribute='instance_id'))[0] }}"
+  loop:
+    - "{{ rt_def_id }}"
+    - "{{ rt_igw_id }}"

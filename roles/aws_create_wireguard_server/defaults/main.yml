@@ -2,7 +2,7 @@
 region: 'us-east-1'
 az:
   - { name: 'a', cidr: '10.20.0.16/28' }
-  - { name: 'd', cidr: '10.20.128.16/28' }
+  # - { name: 'd', cidr: '10.20.128.16/28' }
 
 vpc_id: 
 wg_port: 32123
@@ -11,3 +11,5 @@ instance_type: t2.micro
 ami_name: Ubuntu Wireguard
 
 image_id: ami-00874d747dde814fa # Ubuntu 22.04
+
+vpn_subnet: 10.213.213.0/24
