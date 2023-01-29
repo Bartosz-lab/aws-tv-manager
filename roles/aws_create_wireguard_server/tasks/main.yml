@@ -28,7 +28,7 @@
       Ansible: true
       Cloud-TV: true
     name: TV VPN Security Group
-    description: Allow inboud trafic to wireguard
+    description: Allow inboud trafic to wireguard and trafic in vpn subnet
     vpc_id: "{{ vpc_id }}"
     rules: 
       - proto: udp
@@ -41,6 +41,16 @@
         to_port: "{{ wg_port }}"
         cidr_ip: 0.0.0.0/0
         rule_desc: allow trafic from health check
+      - proto: tcp
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 10.20.0.0/16
+        rule_desc: allow route from vpc to vpn
+      - proto: udp
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 10.20.0.0/16
+        rule_desc: allow route from vpc to vpn
   register: security_group
 
 - name: Get AMIs
