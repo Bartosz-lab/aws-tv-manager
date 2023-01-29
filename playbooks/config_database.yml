@@ -62,10 +62,11 @@
         table: TVS
         columns:
           - id SERIAL PRIMARY KEY
-          - ip_addr INET
+          - ip_addr INET UNIQUE
+          - name VARCHAR(300) 
           - supervisor_id INT NOT NULL
           - location_id INT NOT NULL
           - available BOOLEAN DEFAULT false
-          - last_seen DATE
+          - last_seen TIMESTAMP
           - FOREIGN KEY (supervisor_id) REFERENCES "EMPLOYEES"(id) ON DELETE CASCADE
           - FOREIGN KEY (location_id) REFERENCES "LOCATIONS"(id) ON DELETE CASCADE
