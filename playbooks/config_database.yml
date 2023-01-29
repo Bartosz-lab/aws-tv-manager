@@ -63,7 +63,6 @@
         columns:
           - id SERIAL PRIMARY KEY
           - ip_addr INET
-          # - status 
           - supervisor_id INT NOT NULL
           - location_id INT NOT NULL
           - available BOOLEAN DEFAULT false
