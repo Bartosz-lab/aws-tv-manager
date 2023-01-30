@@ -1,0 +1,45 @@
+# Create Lambda functions
+- name: looped creation
+  amazon.aws.lambda:
+    name: '{{ item.name }}'
+    state: present
+    zip_file: '{{ item.zip_file }}'
+    runtime: 'python3.8'
+    role: 'arn:aws:iam::071163147552:role/LabRole'
+    handler: 'lambda_function.lambda_handler'
+    vpc_subnet_ids:
+    - subnet-03ea09702f723eeb8
+    - subnet-018bcadf8001edde2
+    vpc_security_group_ids:
+    - sg-05f20278fb998bfae
+    environment_variables: '{{ item.env_vars }}'
+    tags:
+      key1: 'value1'
+  loop:
+    - name: TVHealthcheck
+      zip_file: tvhealthcheck.zip
+      env_vars:
+        db: "TV Database"
+        host_reader: "tv-database.cluster-ro-crwrdi5us9bm.us-east-1.rds.amazonaws.com"
+        host_writer: "tv-database.cluster-crwrdi5us9bm.us-east-1.rds.amazonaws.com"
+        password: "Password123"
+        username: "tvadmin"
+
+# To remove previously added tags pass an empty dict
+- name: remove tags
+  amazon.aws.lambda:
+    name: 'Lambda function'
+    state: present
+    zip_file: 'code.zip'
+    runtime: 'python3.8'
+    role: 'arn:aws:iam::071163147552:role/LabRole'
+    handler: 'hello_python.my_handler'
+    tags: {}
+
+# Basic Lambda function deletion
+- name: Delete Lambda functions TVHealthcheck
+  amazon.aws.lambda:
+    name: '{{ item }}'
+    state: absent
+  loop:
+    - TVHealthcheck
