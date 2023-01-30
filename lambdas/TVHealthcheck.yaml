@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template describing your function.
+Resources:
+  tescik:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: .
+      Description: ''
+      MemorySize: 128
+      Timeout: 20
+      Role: 'arn:aws:iam::071163147552:role/LabRole'
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-05f20278fb998bfae
+        SubnetIds:
+          - subnet-03ea09702f723eeb8
+          - subnet-018bcadf8001edde2
+      Environment:
+        Variables:
+          db: TV Database
+          host_reader: tv-database.cluster-ro-crwrdi5us9bm.us-east-1.rds.amazonaws.com
+          host_writer: tv-database.cluster-crwrdi5us9bm.us-east-1.rds.amazonaws.com
+          password: Password123
+          username: tvadmin
+      RuntimePolicy:
+        UpdateRuntimeOn: Auto
