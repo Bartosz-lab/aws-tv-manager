@@ -64,6 +64,7 @@
           - id SERIAL PRIMARY KEY
           - ip_addr INET UNIQUE
           - name VARCHAR(300) 
+          - config VARCHAR(300) 
           - supervisor_id INT NOT NULL
           - location_id INT NOT NULL
           - available BOOLEAN DEFAULT false
