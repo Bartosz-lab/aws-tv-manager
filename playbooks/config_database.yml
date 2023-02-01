@@ -50,7 +50,8 @@
           - id SERIAL PRIMARY KEY
           - name VARCHAR(80)
           - surname VARCHAR(80)
-          - role VARCHAR(30)
+          - phone VARCHAR(9)
+          - email VARCHAR(80)
 
     - name: Create TVs Table
       community.postgresql.postgresql_table:
