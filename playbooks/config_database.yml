@@ -68,7 +68,7 @@
           - config VARCHAR(300) 
           - supervisor_id INT NOT NULL
           - location_id INT NOT NULL
-          - available BOOLEAN DEFAULT false
+          - notified BOOLEAN DEFAULT false
           - last_seen TIMESTAMP
           - FOREIGN KEY (supervisor_id) REFERENCES "EMPLOYEES"(id) ON DELETE CASCADE
           - FOREIGN KEY (location_id) REFERENCES "LOCATIONS"(id) ON DELETE CASCADE
