@@ -21,6 +21,10 @@
         - wg
         - wg_init
 
+    - role: aws_deploy_frontend
+      tags: 
+        - frontend
+
 - import_playbook: playbooks/config_wireguard.yml
   tags:
     - wg

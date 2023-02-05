@@ -1,0 +1,20 @@
+---
+- name: Create new bucket
+  amazon.aws.s3_bucket:
+    name: "{{ bucket_name }}"
+    state: present
+    tags:
+      Ansible: true
+      Cloud-TV: true
+    # delete_public_access: true
+    policy: "{{ bucket_policy }}"
+
+- name: Add Frontend Files
+  community.aws.s3_sync:
+    bucket: "{{ bucket_name }}"
+    file_root: roles/aws_deploy_frontend/files/aws-tv-manager-website/
+
+- name: Add website configuration to bucket
+  community.aws.s3_website:
+    name: "{{ bucket_name }}"
+    state: present
